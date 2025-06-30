@@ -3,6 +3,7 @@ import {Task} from '../models/task.js'
 import logger from '../logs/logger.js'
 import {Status} from '../constants/index.js'
 import { encriptar } from '../common/bcript.js'
+import { Op } from 'sequelize';
 
 async function getUsers(req, res, next) {
     try{
@@ -134,6 +135,41 @@ async function getTasks(req,res,next){
     }
 }
 
+async function getUsersPagination(req, res, next) {
+    try {
+        // 1. Extraer los query params con valores por defecto
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || '';
+        const orderBy = req.query.orderBy || 'id';
+        const orderDir = req.query.orderDir?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+        const offset = (page - 1) * limit;
+
+        // 2. Consultar con filtros
+        const { count, rows } = await User.findAndCountAll({
+            attributes: ['id', 'username', 'status'],
+            where: {
+                username: {
+                    [Op.iLike]: `%${search}%`,
+                },
+            },
+            order: [[orderBy, orderDir]],
+            limit,
+            offset
+        });
+
+        // 3. Responder en formato requerido
+        res.json({
+            total: count,
+            page,
+            pages: Math.ceil(count / limit),
+            data: rows
+        });
+    } catch (error) {
+        next(error);
+    }
+}
 
 export default{
     getUsers,
@@ -142,5 +178,6 @@ export default{
     updateUser,
     deleteUser,
     activateInactivate,
-    getTasks
+    getTasks,
+    getUsersPagination
 }

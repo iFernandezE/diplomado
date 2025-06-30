@@ -7,6 +7,9 @@ import { authenticateToken } from '../middlewares/authenticate.js';
 const router = Router();
 
 router
+.get('/list/pagination', userController.getUsersPagination);
+
+router
 .route('/')
 .get(userController.getUsers)
 .post(validate(createUserSchema,'body'),userController.createUser);

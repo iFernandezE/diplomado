@@ -9,7 +9,7 @@ async function login(req,res,next){
         const {username, password} = req.body;
         const user = await User.findOne({where: {username}});
 
-        if (!user) res.status(403).json({message: 'User not found'});
+        if (!user) return res.status(403).json({message: 'User not found'});
         
         const isMatch = await comparar(password, user.password);
         

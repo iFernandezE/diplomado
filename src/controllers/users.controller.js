@@ -1,14 +1,14 @@
 import {User} from '../models/user.js'
 import {Task} from '../models/task.js'
 import logger from '../logs/logger.js'
-import {Status} from '../constants/index.js'
+import { Status, AllowedLimits, AllowedOrderBy, AllowedOrderDir } from '../constants/index.js';
 import { encriptar } from '../common/bcript.js'
 import { Op } from 'sequelize';
 
 async function getUsers(req, res, next) {
     try{
         const users = await User.findAll({
-            attributes: ['id','username','password','status'],
+            attributes: ['id','username','password','status','updatedAt','createdAt'],
             order: [['id', 'DESC']],
             where:{
                 status: Status.ACTIVE,
@@ -137,35 +137,54 @@ async function getTasks(req,res,next){
 
 async function getUsersPagination(req, res, next) {
     try {
-        // 1. Extraer los query params con valores por defecto
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const search = req.query.search || '';
-        const orderBy = req.query.orderBy || 'id';
-        const orderDir = req.query.orderDir?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+        const {
+            page = 1,
+            limit = 10,
+            search = '',
+            orderBy = 'id',
+            orderDir = 'DESC',
+        } = req.query;
 
-        const offset = (page - 1) * limit;
+        const pageInt = parseInt(page);
+        const limitInt = parseInt(limit);
 
-        // 2. Consultar con filtros
+        if (!AllowedLimits.includes(limitInt)) {
+            return res.status(400).json({ message: "invalid limit." });
+        }
+
+        if (!AllowedOrderBy.includes(orderBy)) {
+            return res.status(400).json({ message: "invalid orderBy. " });
+        }
+
+        const orderDirUpper = orderDir.toUpperCase();
+        if (!AllowedOrderDir.includes(orderDirUpper)) {
+            return res.status(400).json({ message: "invalid orderDir. " });
+        }
+
+        const offset = (pageInt - 1) * limitInt;
+
         const { count, rows } = await User.findAndCountAll({
             attributes: ['id', 'username', 'status'],
             where: {
                 username: {
                     [Op.iLike]: `%${search}%`,
                 },
+                status: Status.ACTIVE
             },
-            order: [[orderBy, orderDir]],
-            limit,
+            order: [[orderBy, orderDirUpper]],
+            limit: limitInt,
             offset
         });
 
-        // 3. Responder en formato requerido
+        const totalPages = Math.ceil(count / limitInt);
+
         res.json({
             total: count,
-            page,
-            pages: Math.ceil(count / limit),
-            data: rows
+            page: pageInt,
+            pages: totalPages,
+            data: rows,
         });
+
     } catch (error) {
         next(error);
     }

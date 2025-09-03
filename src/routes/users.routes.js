@@ -1,26 +1,24 @@
-import {Router} from 'express';
+import { Router } from 'express';
 import userController from '../controllers/users.controller.js';
 import validate from '../validators/validate.js';
-import {createUserSchema} from '../validators/user.validate.js';
+import { createUserSchema } from '../validators/user.validate.js';
 import { authenticateToken } from '../middlewares/authenticate.js';
 
 const router = Router();
 
+// Routes
 router
-.get('/list/pagination', userController.getUsersPagination);
+  .route('/')
+  .get(userController.getUsers)
+  .post(validate(createUserSchema, 'body'), userController.createUser);
 
 router
-.route('/')
-.get(userController.getUsers)
-.post(validate(createUserSchema,'body'),userController.createUser);
+  .route('/:id')
+  .get(authenticateToken, userController.getUser)
+  .put(authenticateToken, userController.updateUser)
+  .delete(authenticateToken, userController.deleteUser)
+  .patch(authenticateToken, userController.activateInactivate);
 
-router
-.route('/:id')
-.get(authenticateToken, userController.getUser)
-.put(authenticateToken,userController.updateUser)
-.delete(authenticateToken,userController.deleteUser)
-.patch(authenticateToken,userController.activateInactivate);
-
-router.get('/:id/tasks', authenticateToken, userController.getTasks)
+router.get('/:id/tasks', authenticateToken, userController.getTasks);
 
 export default router;

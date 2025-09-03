@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 
 const app = express();
 
@@ -11,6 +12,7 @@ import errorHandler from './middlewares/errorHandler.js';
 import notFound from './middlewares/notFound.js';
 import { authenticateToken } from './middlewares/authenticate.js';
 
+app.use(cors())
 //Middlewares
 app.use(morgan('dev'));
 app.use(express.json());

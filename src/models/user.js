@@ -2,7 +2,7 @@ import {DataTypes} from 'sequelize';
 import {sequelize} from '../database/database.js';
 import {Status} from '../constants/index.js';
 import {Task} from './task.js';
-import {encriptar} from '../common/bcript.js';
+import {encriptar} from '../common/bcrypt.js';
 
 export const User = sequelize.define('user', {
     id: {
